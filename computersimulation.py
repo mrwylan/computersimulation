@@ -45,27 +45,28 @@ class Boundry(ABC):
     
     @abstractmethod
     def check(self, vector):
+        """Returns True if the boundry is violated."""
         pass
     
     @abstractmethod
     def reflect(self, vector):
+        """Returns the Vector reflected at the wall."""
         pass
 
 
 class Wall(Boundry):
+    """Implements a boundry of a cuboid volume."""
     def __init__(self, dimension, modifier, position):
         self.dimension = dimension
         self.modifier = modifier
         self.position = position
     
     def check(self, vector):
-        """Returns True if the boundry is violated."""
         if vector[self.dimension] * self.modifier > self.position:
             return True
         return False
     
     def reflect(self, vector):
-        """Returns the Vector reflected at the wall."""
         newVector = vector
         newVector[self.dimension] = 2 * self.position - newVector[self.dimension]
         return newVector
@@ -83,6 +84,7 @@ class Volume(ABC):
     
     @abstractmethod
     def randomPosition(self):
+        """Returns a random position inside the volume."""
         pass
     
     def checkBoundries(self, position):
@@ -93,6 +95,7 @@ class Volume(ABC):
         return False
     
     def reflectBoundries(self, position):
+        """Returns the vector reflected at boundries it violates."""
         newPosition = position
         for boundry in self.boundries:
             if boundry.check(position):
@@ -119,6 +122,7 @@ class Cuboid(Volume):
 
 
 class Experiment():
+    """A class to implement the experiment setup. It takes care of the time aspect."""
     def __init__(self, volume, particles, numberOfSimulationSteps):
         self.volume = volume
         self.particles = particles
@@ -142,9 +146,3 @@ class Experiment():
 
 experiment = Experiment.createCubeExperiment(10000, 10, 100, 20)
 experiment.run()
-
-for particle in experiment.particles:
-    if experiment.volume.checkBoundries(particle.position):
-        print("nopedinope")
-    else:
-        print("huiii")
