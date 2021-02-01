@@ -39,31 +39,77 @@ class Particle():
         print(self.position, self.speed, self.direction)
 
 
-class Volume(ABC):
+class Boundry(ABC):
     def __init__(self):
         pass
     
     @abstractmethod
-    def isInside(self, position):
+    def check(self, vector):
         pass
+    
+    @abstractmethod
+    def reflect(self, vector):
+        pass
+
+
+class Wall(Boundry):
+    def __init__(self, dimension, modifier, position):
+        self.dimension = dimension
+        self.modifier = modifier
+        self.position = position
+    
+    def check(self, vector):
+        """Returns True if the boundry is violated."""
+        if vector[self.dimension] * self.modifier > self.position:
+            return True
+        return False
+    
+    def reflect(self, vector):
+        """Returns the Vector reflected at the wall."""
+        newVector = vector
+        newVector[self.dimension] = 2 * self.position - newVector[self.dimension]
+        return newVector
+
+
+class Volume(ABC):
+    def __init__(self, volume, dimensions):
+        self.volume = volume
+        self.dimensions = dimensions
+        self.setBoundries()
+    
+    @abstractmethod
+    def setBoundries(self):
+        self.boundries = []
     
     @abstractmethod
     def randomPosition(self):
         pass
+    
+    def checkBoundries(self, position):
+        """Returns True if a boundry is violated."""
+        for boundry in self.boundries:
+            if boundry.check(position):
+                return True
+        return False
+    
+    def reflectBoundries(self, position):
+        newPosition = position
+        for boundry in self.boundries:
+            if boundry.check(position):
+                newPosition = boundry.reflect(position)
+        return newPosition
 
 
 class Cuboid(Volume):
     def __init__(self, x, y, z):
-        super().__init__()
         self.vector = np.array([abs(x), abs(y), abs(z)])
-        self.volume = abs(x) * abs(y) * abs(z)
-        self.dimensions = len(self.vector)
+        super().__init__(abs(x) * abs(y) * abs(z), len(self.vector))
     
-    def isInside(self, array):
+    def setBoundries(self):
+        self.boundries = []
         for index in range(self.dimensions):
-            if array[index] < 0 or self.vector[index] < array[index]:
-                return False
-        return True
+            self.boundries.append(Wall(index, -1, 0))
+            self.boundries.append(Wall(index, 1, self.vector[index]))
     
     def randomPosition(self):
         array = []
@@ -96,3 +142,9 @@ class Experiment():
 
 experiment = Experiment.createCubeExperiment(10000, 10, 100, 20)
 experiment.run()
+
+for particle in experiment.particles:
+    if experiment.volume.checkBoundries(particle.position):
+        print("nopedinope")
+    else:
+        print("huiii")
