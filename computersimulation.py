@@ -7,26 +7,17 @@ Created on Mon Feb  1 11:42:50 2021
 """
 
 import numpy as np # package import
-from random import random, uniform # funktion import
+from random import random  # funktion import
 from abc import ABC, abstractmethod # class import, function import
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 
-def randomDirection():
-    """
-    Returns
-    -------
-    np.array
-        Returns a randomly oriented unit vector. See "Spere Point Picking"
-    """
-    x1 = 1
-    x2 = 1
-    while x1 * x1 + x2 * x2 >= 1:
-        x1 = uniform(-1, 1)
-        x2 = uniform(-1, 1)
-    x = 2 * x1 * np.sqrt(1 - x1 * x1 - x2 * x2)
-    y = 2 * x2 * np.sqrt(1 - x1 * x1 - x2 * x2)
-    z = 1 - 2 * (x1 * x1 + x2 * x2)
-    return np.array([x, y, z])
+def randomDirection(dimensions):
+    """"Returns a unit vector in a random direction."""
+    randoms = [np.random.normal() for i in range(dimensions)]
+    r = np.sqrt(sum(x*x for x in randoms))
+    return np.array([x/r for x in randoms])
 
 
 class Particle():
@@ -73,8 +64,7 @@ class Wall(Boundry):
 
 
 class Volume(ABC):
-    def __init__(self, volume, dimensions):
-        self.volume = volume
+    def __init__(self, dimensions):
         self.dimensions = dimensions
         self.setBoundries()
     
@@ -97,16 +87,17 @@ class Volume(ABC):
     def reflectBoundries(self, position):
         """Returns the vector reflected at boundries it violates."""
         newPosition = position
-        for boundry in self.boundries:
-            if boundry.check(position):
-                newPosition = boundry.reflect(position)
+        while self.checkBoundries(newPosition):
+            for boundry in self.boundries:
+                if boundry.check(position):
+                    newPosition = boundry.reflect(position)
         return newPosition
 
 
 class Cuboid(Volume):
-    def __init__(self, x, y, z):
-        self.vector = np.array([abs(x), abs(y), abs(z)])
-        super().__init__(abs(x) * abs(y) * abs(z), len(self.vector))
+    def __init__(self, vector):
+        self.vector = vector
+        super().__init__(len(self.vector))
     
     def setBoundries(self):
         self.boundries = []
@@ -129,20 +120,22 @@ class Experiment():
         self.numberOfSimulationSteps = numberOfSimulationSteps
     
     def runStep(self):
-        pass
+        for paricle in self.particles:
+            particle.position = self.volume.reflectBoundries(particle.position + paricle.speed * particle.direction)
     
     def run(self):
-        print("We are ready to run!")
-        self.runStep()
+        pass
     
-    def createCubeExperiment(cubeEdgeLength, numberOfParticles, numberOfSimulationSteps, maxSpeed):
-        cube = Cuboid(cubeEdgeLength, cubeEdgeLength, cubeEdgeLength)
+    def createCubeExperiment(cubeEdgeLength, numberOfParticles, numberOfDimensions, numberOfSimulationSteps, maxSpeed):
+        cubeVector = []
+        for i in range(numberOfDimensions):
+            cubeVector.append(abs(cubeEdgeLength))
+        cube = Cuboid(np.array(cubeVector))
         particles = []
         for i in range(numberOfParticles):
-            part = Particle(cube.randomPosition(), maxSpeed * random(), randomDirection())
+            part = Particle(cube.randomPosition(), maxSpeed * random(), randomDirection(numberOfDimensions))
             part.showState()
             particles.append(part)
         return Experiment(cube, particles, numberOfSimulationSteps)
 
-experiment = Experiment.createCubeExperiment(10000, 10, 100, 20)
-experiment.run()
+experiment = Experiment.createCubeExperiment(10000, 10, 2, 100, 20)
