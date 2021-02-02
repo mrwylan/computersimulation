@@ -120,8 +120,8 @@ class Experiment():
         self.numberOfSimulationSteps = numberOfSimulationSteps
     
     def runStep(self):
-        for paricle in self.particles:
-            particle.position = self.volume.reflectBoundries(particle.position + paricle.speed * particle.direction)
+        for particle in self.particles:
+            particle.position = self.volume.reflectBoundries(particle.position + particle.speed * particle.direction)
     
     def run(self):
         pass
@@ -139,5 +139,3 @@ class Experiment():
         return Experiment(cube, particles, numberOfSimulationSteps)
 
 experiment = Experiment.createCubeExperiment(10000, 10, 2, 100, 20)
-
-""" Comment """
