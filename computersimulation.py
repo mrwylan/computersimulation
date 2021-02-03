@@ -21,6 +21,7 @@ def randomDirection(dimensions):
 
 
 class Particle():
+    """Models the behaviour of a particle."""
     def __init__(self, position, speed, direction):
         self.position = position
         self.speed = speed
@@ -28,21 +29,30 @@ class Particle():
     
     def showState(self):
         print(self.position, self.speed, self.direction)
+    
+    def move(self):
+        self.position = self.position + self.speed * self.direction
 
 
 class Boundry(ABC):
+    """An abstract class for what a boundry should do."""
     def __init__(self):
         pass
     
     @abstractmethod
     def check(self, vector):
         """Returns True if the boundry is violated."""
-        pass
+        return False
     
     @abstractmethod
-    def reflect(self, vector):
+    def reflectPosition(self, vector):
         """Returns the Vector reflected at the wall."""
-        pass
+        return vector
+    
+    @abstractmethod
+    def reflectDirection(self, vector):
+        """Returns a reflected direction vector."""
+        return vector
 
 
 class Wall(Boundry):
@@ -57,13 +67,19 @@ class Wall(Boundry):
             return True
         return False
     
-    def reflect(self, vector):
+    def reflectPosition(self, vector):
         newVector = vector
         newVector[self.dimension] = 2 * self.position - newVector[self.dimension]
+        return newVector
+    
+    def reflectDirection(self, vector):
+        newVector = vector
+        newVector[self.dimension] = -1 * newVector[self.dimension]
         return newVector
 
 
 class Volume(ABC):
+    """An abstract class that coordinates boundries and holds measurements."""
     def __init__(self, dimensions):
         self.dimensions = dimensions
         self.setBoundries()
@@ -84,17 +100,19 @@ class Volume(ABC):
                 return True
         return False
     
-    def reflectBoundries(self, position):
-        """Returns the vector reflected at boundries it violates."""
-        newPosition = position
-        while self.checkBoundries(newPosition):
+    def reflectParticle(self, particle):
+        """Reflects position and direction of a given particle."""
+        while self.checkBoundries(particle.position):
             for boundry in self.boundries:
-                if boundry.check(position):
-                    newPosition = boundry.reflect(position)
-        return newPosition
+                if boundry.check(particle.position):
+                    particle.position = boundry.reflectPosition(particle.position)
+                    particle.direction = boundry.reflectDirection(particle.direction)
 
 
 class Cuboid(Volume):
+    """A class that implements the abstract volume in a cuboid shape. See that
+    it inherits some functions from its parent class. The cuboid spans form the
+    origin to the point of its vector 'self.vector', with its edges oriented othogonally."""
     def __init__(self, vector):
         self.vector = vector
         super().__init__(len(self.vector))
@@ -118,19 +136,43 @@ class Experiment():
         self.volume = volume
         self.particles = particles
         self.numberOfSimulationSteps = numberOfSimulationSteps
+        self.stepIndex = 0
+    
+    def getParticlePositions(self):
+        return np.array([particle.position for particle in self.particles]) 
     
     def runStep(self):
+        #print(self.stepIndex)
         for particle in self.particles:
-            particle.position = self.volume.reflectBoundries(particle.position + particle.speed * particle.direction)
+            particle.move()
+            self.volume.reflectParticle(particle)
+            #particle.showState()
     
     def run(self):
-        pass
+        for self.stepIndex in range(self.numberOfSimulationSteps):
+            self.runStep()
+    
+    def runAnimated2D(self):
+        if not self.volume.dimensions == 2:
+            print("Please only animate 2D Particles!")
+            return 1
+        
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, self.volume.vector[0])
+        ax.set_ylim(0, self.volume.vector[1])
+        circles, = ax.plot([], [], 'bo', ms=6)
+        
+        def animationFunction(i):
+            xdata, ydata = np.transpose(self.getParticlePositions())
+            self.runStep()
+            circles.set_data(xdata, ydata)
+            return circles,
+        
+        animation = FuncAnimation(fig, func=animationFunction, frames=600, interval=10, blit=True)
+        plt.show()
     
     def createCubeExperiment(cubeEdgeLength, numberOfParticles, numberOfDimensions, numberOfSimulationSteps, maxSpeed):
-        cubeVector = []
-        for i in range(numberOfDimensions):
-            cubeVector.append(abs(cubeEdgeLength))
-        cube = Cuboid(np.array(cubeVector))
+        cube = Cuboid(np.array([abs(cubeEdgeLength) for i in range(numberOfDimensions)]))
         particles = []
         for i in range(numberOfParticles):
             part = Particle(cube.randomPosition(), maxSpeed * random(), randomDirection(numberOfDimensions))
@@ -138,4 +180,5 @@ class Experiment():
             particles.append(part)
         return Experiment(cube, particles, numberOfSimulationSteps)
 
-experiment = Experiment.createCubeExperiment(10000, 10, 2, 100, 20)
+experiment = Experiment.createCubeExperiment(100, 10, 2, 1000, 1)
+experiment.runAnimated2D()
