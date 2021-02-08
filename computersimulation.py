@@ -11,13 +11,18 @@ from random import random  # funktion import
 from abc import ABC, abstractmethod # class import, function import
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from numpy.core.numeric import NaN
+
+def magnitude(arrayOrVector):
+    return np.sqrt(sum([x*x for x in arrayOrVector]))
+
+def normalize(arrayOrVector):
+    r = magnitude(arrayOrVector)
+    return np.array([x/r for x in arrayOrVector])
 
 def randomDirection(dimensions):
     """"Returns a unit vector in a random direction."""
     randoms = [np.random.normal() for i in range(dimensions)]
-    r = np.sqrt(sum(x*x for x in randoms))
-    return np.array([x/r for x in randoms])
+    return normalize(randoms)
 
 class Particle():
     """Models the behaviour of a particle."""
@@ -32,6 +37,19 @@ class Particle():
     
     def move(self):
         self.position = self.position + self.speed * self.direction
+
+class GravityParticle(Particle):
+    def __init__(self, position, speed, direction, mass, gravity=9.81):
+        super().__init__(position, speed, direction, mass)
+        zeros = np.zeros(len(self.position)).tolist()
+        zeros[1] = -1
+        self.gravity = gravity * np.array(zeros)
+    
+    def move(self):
+        vector = self.speed * self.direction + self.gravity
+        self.speed = magnitude(vector)
+        self.direction = normalize(vector)
+        super().move()
 
 class Boundry(ABC):
     """An abstract class for what a boundry should do."""
@@ -206,8 +224,19 @@ class Experiment():
             part.showState()
             particles.append(part)
         return Experiment(cube, particles, numberOfSimulationSteps)
+    
+    def createGravityCubeExperiment(cubeEdgeLength, numberOfParticles, particleMass, numberOfDimensions, numberOfSimulationSteps, maxSpeed, gravity):
+        cube = Cuboid(np.array([abs(cubeEdgeLength) for i in range(numberOfDimensions)]))
+        cube.boundries[3].position = cubeEdgeLength * 30
+        particles = []
+        for i in range(numberOfParticles):
+            part = GravityParticle(cube.randomPosition(), maxSpeed * random(), randomDirection(numberOfDimensions), particleMass, gravity)
+            part.showState()
+            particles.append(part)
+        return Experiment(cube, particles, numberOfSimulationSteps)
 
-experiment = Experiment.createCubeExperiment(100, 50, 1, 2, 1000, 1)
+#experiment = Experiment.createCubeExperiment(100, 10, 1, 2, 1000, 1)
+experiment = Experiment.createGravityCubeExperiment(100, 1000, 1, 2, 1000, 1, 0.05)
 experiment.runAnimated2D()
 #experiment.run()
 experiment.calculatePressure()
