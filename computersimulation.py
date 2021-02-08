@@ -11,6 +11,7 @@ from random import random  # funktion import
 from abc import ABC, abstractmethod # class import, function import
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from numpy.core.numeric import NaN
 
 def randomDirection(dimensions):
     """"Returns a unit vector in a random direction."""
@@ -20,10 +21,11 @@ def randomDirection(dimensions):
 
 class Particle():
     """Models the behaviour of a particle."""
-    def __init__(self, position, speed, direction):
+    def __init__(self, position, speed, direction, mass):
         self.position = position
         self.speed = speed
         self.direction = direction
+        self.mass = mass
     
     def showState(self):
         print(self.position, self.speed, self.direction)
@@ -34,7 +36,7 @@ class Particle():
 class Boundry(ABC):
     """An abstract class for what a boundry should do."""
     def __init__(self):
-        pass
+        self.reflectedImpulse = 0
     
     @abstractmethod
     def check(self, vector):
@@ -50,6 +52,12 @@ class Boundry(ABC):
     def reflectDirection(self, vector):
         """Returns a reflected direction vector."""
         return vector
+    
+    def reflectParticle(self, particle):
+        """Reflects a particle on the boundry."""
+        particle.position = self.reflectPosition(particle.position)
+        particle.direction = self.reflectDirection(particle.direction)
+        self.reflectedImpulse += particle.speed * particle.mass
 
 class Wall(Boundry):
     """Implements a boundry of a cuboid volume."""
@@ -57,6 +65,7 @@ class Wall(Boundry):
         self.dimension = dimension
         self.modifier = modifier
         self.position = position
+        super().__init__()
     
     def check(self, vector):
         if vector[self.dimension] * self.modifier > self.position:
@@ -84,6 +93,10 @@ class Volume(ABC):
         self.boundries = []
     
     @abstractmethod
+    def getSurfaceArea(self):
+        pass
+    
+    @abstractmethod
     def randomPosition(self):
         """Returns a random position inside the volume."""
         pass
@@ -100,8 +113,10 @@ class Volume(ABC):
         while self.checkBoundries(particle.position):
             for boundry in self.boundries:
                 if boundry.check(particle.position):
-                    particle.position = boundry.reflectPosition(particle.position)
-                    particle.direction = boundry.reflectDirection(particle.direction)
+                    boundry.reflectParticle(particle)
+    
+    def totalReflectedImpulse(self):
+        return sum([boundry.reflectedImpulse for boundry in self.boundries])
 
 class Cuboid(Volume):
     """A class that implements the abstract volume in a cuboid shape. See that
@@ -119,6 +134,16 @@ class Cuboid(Volume):
             self.boundries.append(Wall(index, WALL_LEFT, 0))
             self.boundries.append(Wall(index, WALL_RIGHT, self.vector[index]))
     
+    def getSurfaceArea(self):
+        array = []
+        for boundry in self.boundries:
+            area = 1
+            for index in range(self.dimensions):
+                if index != boundry.dimension:
+                    area *= self.vector[index]
+            array.append(area)
+        return sum(array)
+    
     def randomPosition(self):
         array = []
         for index in range(self.dimensions):
@@ -134,17 +159,24 @@ class Experiment():
         self.stepIndex = 0
     
     def getParticlePositions(self):
-        return np.array([particle.position for particle in self.particles]) 
+        """Returns a np.array with the particle position vectors in each row."""
+        return np.array([particle.position for particle in self.particles])
+
+    def calculatePressure(self):
+        pressure = self.volume.totalReflectedImpulse()/(self.stepIndex * self.volume.getSurfaceArea())
+        print(pressure)
+        return pressure 
     
     def runStep(self):
         #print(self.stepIndex)
         for particle in self.particles:
             particle.move()
             self.volume.reflectParticle(particle)
+            self.stepIndex += 1
             #particle.showState()
     
     def run(self):
-        for self.stepIndex in range(self.numberOfSimulationSteps):
+        while self.stepIndex < self.numberOfSimulationSteps:
             self.runStep()
     
     def runAnimated2D(self):
@@ -156,7 +188,7 @@ class Experiment():
         ax.set_xlim(0, self.volume.vector[0])
         ax.set_ylim(0, self.volume.vector[1])
         circles, = ax.plot([], [], 'bo', ms=6)
-        
+
         def animationFunction(i):
             xdata, ydata = np.transpose(self.getParticlePositions())
             self.runStep()
@@ -166,14 +198,16 @@ class Experiment():
         animation = FuncAnimation(fig, func=animationFunction, frames=600, interval=10, blit=True)
         plt.show()
     
-    def createCubeExperiment(cubeEdgeLength, numberOfParticles, numberOfDimensions, numberOfSimulationSteps, maxSpeed):
+    def createCubeExperiment(cubeEdgeLength, numberOfParticles, particleMass, numberOfDimensions, numberOfSimulationSteps, maxSpeed):
         cube = Cuboid(np.array([abs(cubeEdgeLength) for i in range(numberOfDimensions)]))
         particles = []
         for i in range(numberOfParticles):
-            part = Particle(cube.randomPosition(), maxSpeed * random(), randomDirection(numberOfDimensions))
+            part = Particle(cube.randomPosition(), maxSpeed * random(), randomDirection(numberOfDimensions), particleMass)
             part.showState()
             particles.append(part)
         return Experiment(cube, particles, numberOfSimulationSteps)
 
-experiment = Experiment.createCubeExperiment(100, 1000, 2, 1000, 1)
+experiment = Experiment.createCubeExperiment(100, 50, 1, 2, 1000, 1)
 experiment.runAnimated2D()
+#experiment.run()
+experiment.calculatePressure()
