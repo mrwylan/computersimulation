@@ -12,13 +12,11 @@ from abc import ABC, abstractmethod # class import, function import
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-
 def randomDirection(dimensions):
     """"Returns a unit vector in a random direction."""
     randoms = [np.random.normal() for i in range(dimensions)]
     r = np.sqrt(sum(x*x for x in randoms))
     return np.array([x/r for x in randoms])
-
 
 class Particle():
     """Models the behaviour of a particle."""
@@ -32,7 +30,6 @@ class Particle():
     
     def move(self):
         self.position = self.position + self.speed * self.direction
-
 
 class Boundry(ABC):
     """An abstract class for what a boundry should do."""
@@ -53,7 +50,6 @@ class Boundry(ABC):
     def reflectDirection(self, vector):
         """Returns a reflected direction vector."""
         return vector
-
 
 class Wall(Boundry):
     """Implements a boundry of a cuboid volume."""
@@ -76,7 +72,6 @@ class Wall(Boundry):
         newVector = vector
         newVector[self.dimension] = -1 * newVector[self.dimension]
         return newVector
-
 
 class Volume(ABC):
     """An abstract class that coordinates boundries and holds measurements."""
@@ -108,7 +103,6 @@ class Volume(ABC):
                     particle.position = boundry.reflectPosition(particle.position)
                     particle.direction = boundry.reflectDirection(particle.direction)
 
-
 class Cuboid(Volume):
     """A class that implements the abstract volume in a cuboid shape. See that
     it inherits some functions from its parent class. The cuboid spans form the
@@ -118,17 +112,18 @@ class Cuboid(Volume):
         super().__init__(len(self.vector))
     
     def setBoundries(self):
+        WALL_LEFT=-1
+        WALL_RIGHT=1
         self.boundries = []
         for index in range(self.dimensions):
-            self.boundries.append(Wall(index, -1, 0))
-            self.boundries.append(Wall(index, 1, self.vector[index]))
+            self.boundries.append(Wall(index, WALL_LEFT, 0))
+            self.boundries.append(Wall(index, WALL_RIGHT, self.vector[index]))
     
     def randomPosition(self):
         array = []
         for index in range(self.dimensions):
             array.append(self.vector[index] * random())
         return np.array(array)
-
 
 class Experiment():
     """A class to implement the experiment setup. It takes care of the time aspect."""
@@ -180,5 +175,5 @@ class Experiment():
             particles.append(part)
         return Experiment(cube, particles, numberOfSimulationSteps)
 
-experiment = Experiment.createCubeExperiment(100, 10, 2, 1000, 1)
+experiment = Experiment.createCubeExperiment(100, 1000, 2, 1000, 1)
 experiment.runAnimated2D()
