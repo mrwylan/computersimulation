@@ -38,19 +38,6 @@ class Particle():
     def move(self):
         self.position = self.position + self.speed * self.direction
 
-class GravityParticle(Particle):
-    def __init__(self, position, speed, direction, mass, gravity=9.81):
-        super().__init__(position, speed, direction, mass)
-        zeros = np.zeros(len(self.position)).tolist()
-        zeros[1] = -1
-        self.gravity = gravity * np.array(zeros)
-    
-    def move(self):
-        vector = self.speed * self.direction + self.gravity
-        self.speed = magnitude(vector)
-        self.direction = normalize(vector)
-        super().move()
-
 class Boundry(ABC):
     """An abstract class for what a boundry should do."""
     def __init__(self):
@@ -235,8 +222,8 @@ class Experiment():
             particles.append(part)
         return Experiment(cube, particles, numberOfSimulationSteps)
 
-#experiment = Experiment.createCubeExperiment(100, 10, 1, 2, 1000, 1)
-experiment = Experiment.createGravityCubeExperiment(1000, 1000, 1, 2, 1000, 1, 0.05)
+"""1 simulation step is one microsecond. Let the cube be 1 qubic meter in milimeters. The speeds we expect are around 1000 meters per second, thus 0.001 meters per """
+
+experiment = Experiment.createCubeExperiment(100, 10, 1, 2, 1000, 1)
 experiment.runAnimated2D()
-#experiment.run()
 experiment.calculatePressure()
