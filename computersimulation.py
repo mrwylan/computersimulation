@@ -236,7 +236,7 @@ class Experiment():
         return Experiment(cube, particles, numberOfSimulationSteps)
 
 #experiment = Experiment.createCubeExperiment(100, 10, 1, 2, 1000, 1)
-experiment = Experiment.createGravityCubeExperiment(100, 1000, 1, 2, 1000, 1, 0.05)
+experiment = Experiment.createGravityCubeExperiment(1000, 1000, 1, 2, 1000, 1, 0.05)
 experiment.runAnimated2D()
 #experiment.run()
 experiment.calculatePressure()
