@@ -75,7 +75,7 @@ class Cube2DExperiment(Experiment):
             particles.append(part)
         return Cube2DExperiment(cube, particles)
 
-exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 100, 1, 1, 1)
+exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 100, 1, 1, 5)
 exp.getSystemInformation()
 exp.runAnimated2D()
 exp.getSystemInformation()
