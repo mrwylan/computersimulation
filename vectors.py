@@ -10,6 +10,11 @@ def normalize(arrayOrVector):
     r = magnitude(arrayOrVector)
     return np.array([x/r for x in arrayOrVector])
 
+def combilize(arrayOrVector):
+    """Retruns a tuple of the magnitude and the normalized vector."""
+    r = magnitude(arrayOrVector)
+    return r, np.array([x/r for x in arrayOrVector])
+
 def randomDirection(dimensions):
     """"Returns a unit vector in a random direction."""
     randoms = [np.random.normal() for i in range(dimensions)]
