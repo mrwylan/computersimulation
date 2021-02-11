@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 class Boundry(ABC):
     """An abstract class for what a boundry should do."""
     def __init__(self):
-        pass
+        self.absorbedImpulse = 0
     
     @abstractmethod
     def check(self, vector):
@@ -24,10 +24,16 @@ class Boundry(ABC):
         """Returns a reflected direction vector."""
         return vector
     
+    @abstractmethod
+    def updateImpulse(self, particle: Particle):
+        """Each boundry saves and updates the total impulse experienced by collided particles. This then gets red and reset every timestep by a function in the Experiment class."""
+        pass
+    
     def reflectParticle(self, particle: Particle):
         """Reflects a particle on the boundry."""
         particle.position = self.reflectPosition(particle.position)
         particle.direction = self.reflectDirection(particle.direction)
+        self.updateImpulse(particle)
 
 class Wall(Boundry):
     """Implements a boundry of a cuboid volume."""
@@ -54,12 +60,17 @@ class Wall(Boundry):
         newVector = vector
         newVector[self.dimension] = -1 * newVector[self.dimension]
         return newVector
+    
+    def updateImpulse(self, particle: Particle):
+        """Saves the experienced impulse."""
+        self.absorbedImpulse += particle.mass * particle.speed * abs(particle.direction[self.dimension])
 
 class Volume(ABC):
     """An abstract class that coordinates boundries and holds measurements."""
     def __init__(self, dimensions):
         self.dimensions = dimensions
         self.setBoundries()
+        self.setSurfaceArea()
     
     @abstractmethod
     def setBoundries(self):
@@ -67,10 +78,9 @@ class Volume(ABC):
         self.boundries: List[Boundry] = []
     
     @abstractmethod
-    def getSurfaceArea(self):
+    def setSurfaceArea(self):
         """A method  that needs to be implemented to return the surface area of the volume."""
-        surfaceArea = 1*self.dimensions #or something
-        return surfaceArea
+        self.surfaceArea = 1*self.dimensions #or something
     
     @abstractmethod
     def randomPosition(self):
@@ -107,7 +117,7 @@ class Cuboid(Volume):
             self.boundries.append(Wall(index, WALL_LEFT, 0))
             self.boundries.append(Wall(index, WALL_RIGHT, self.vector[index]))
     
-    def getSurfaceArea(self):
+    def setSurfaceArea(self):
         array = []
         for boundry in self.boundries:
             area = 1
@@ -115,7 +125,7 @@ class Cuboid(Volume):
                 if index != boundry.dimension:
                     area *= self.vector[index]
             array.append(area)
-        return sum(array)
+        self.surfaceArea = sum(array)
     
     def randomPosition(self):
         array = []

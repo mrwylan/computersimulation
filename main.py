@@ -13,33 +13,51 @@ class Experiment():
         self.volume: domain.Volume = volume
         self.particles = particles
         self.numberOfSimulationSteps = numberOfSimulationSteps
-        self.stepIndex = 1
+        self.pressure = 0
+        self.time: int = 0
     
-    def getParticlePositions(self):
-        """Returns a np.array with the particle position vectors in each row."""
-        return np.array([particle.position for particle in self.particles])
-    
-    def runStep(self):
-        #print(self.stepIndex)
+    def moveParticles(self):
         for part in self.particles:
             part.move()
             self.volume.reflectParticle(part)
+    
+    def handleParticleCollisions(self):
         for i in range(len(self.particles)):
             for j in np.arange(i, len(self.particles)):
                 if i != j and particle.checkCollision(self.particles[i], self.particles[j]):
                     particle.collision(self.particles[i], self.particles[j])
-        self.stepIndex += 1
+    
+    def updatePressure(self):
+        impulseHeap = 0
+        for boundry in self.volume.boundries:
+            impulseHeap += boundry.absorbedImpulse
+            boundry.absorbedImpulse = 0
+        self.pressure = self.pressure + (impulseHeap / self.volume.surfaceArea - self.pressure) / self.time
+    
+    def runStep(self):
+        self.time += 1
+        self.moveParticles()
+        self.handleParticleCollisions()
+        self.updatePressure()
     
     def run(self):
-        while self.stepIndex < self.numberOfSimulationSteps:
+        for i in np.arange(1, self.numberOfSimulationSteps):
             self.runStep()
     
-    def getSystemInformation(self):
-        energy = 0
+    def calculateEnergy(self):
+        self.energy = 0
         for part in self.particles:
             part.showState()
-            energy += part.speed * part.speed * part.mass / 2
-        print("System energy:", str(energy))
+            self.energy += part.speed * part.speed * part.mass / 2
+        print("System energy:", str(self.energy))
+        return self.energy
+    
+    def showPressure(self):
+        print("System pressure:", str(self.pressure))
+    
+    def showState(self):
+        self.calculateEnergy()
+        self.showPressure()
 
 class Cube2DExperiment(Experiment):
     def __init__(self, volume: domain.Cuboid, particles: List[particle.Particle]):
@@ -57,7 +75,7 @@ class Cube2DExperiment(Experiment):
         circles, = ax.plot([], [], 'bo', ms=6)
 
         def animationFunction(i):
-            xdata, ydata = np.transpose(self.getParticlePositions())
+            xdata, ydata = np.transpose([particle.position for particle in self.particles])
             self.runStep()
             circles.set_data(xdata, ydata)
             return circles,
@@ -75,7 +93,8 @@ class Cube2DExperiment(Experiment):
             particles.append(part)
         return Cube2DExperiment(cube, particles)
 
-exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 100, 1, 1, 5)
-exp.getSystemInformation()
+
+exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 100, 1, 1, 1)
+exp.showState()
 exp.runAnimated2D()
-exp.getSystemInformation()
+exp.showState()
