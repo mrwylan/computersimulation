@@ -39,7 +39,7 @@ class Cube2DExperiment(Experiment):
         particles = Experiment.createParticleList(numberOfParticles, cube, maxSpeed * random(), particleMass, particleRadius)
         return exp(cube, particles)
 
-exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 1000, 1, 1, 1)
+exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(1000, 1000, 1, 1, 1)
 exp.showState()
 exp.runAnimated2D()
 exp.showState()

@@ -19,9 +19,9 @@ class Experiment():
     
     def handleParticleCollisions(self):
         for i in range(len(self.particles)):
-            for j in np.arange(i, len(self.particles)):
-                if i != j and particle.checkCollision(self.particles[i], self.particles[j]):
-                    particle.collision(self.particles[i], self.particles[j])
+            for j in np.arange(i+1, len(self.particles)):
+                if self.particles[i].checkCollision(self.particles[j]):
+                    self.particles[i].collision(self.particles[j])
     
     def updatePressure(self):
         impulseHeap = 0
