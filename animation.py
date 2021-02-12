@@ -10,7 +10,7 @@ from experiment import Experiment
 
 class Cube2DExperiment(Experiment):
     def __init__(self, volume: domain.Cuboid, particles: List[particle.Particle]):
-        super().__init__(volume, particles, 1)
+        super().__init__(volume, particles)
         self.volume: domain.Cuboid = volume
     
     def runAnimated2D(self):
