@@ -6,7 +6,7 @@ from matplotlib.animation import FuncAnimation
 from vectors import randomDirection
 import particle
 import domain
-from main import Experiment
+from experiment import Experiment
 
 class Cube2DExperiment(Experiment):
     def __init__(self, volume: domain.Cuboid, particles: List[particle.Particle]):
@@ -32,7 +32,8 @@ class Cube2DExperiment(Experiment):
         animation = FuncAnimation(fig, func=animationFunction, interval=10, blit=True)
         plt.show()
     
-    def createCube2DExperiment(cubeEdgeLength, numberOfParticles, particleMass, maxSpeed, particleRadius):
+    @classmethod
+    def createCube2DExperiment(cls, cubeEdgeLength, numberOfParticles, particleMass, maxSpeed, particleRadius):
         NUMBER_OF_DIMENSIONS=2
         cube = domain.Cuboid(np.array([abs(cubeEdgeLength) for i in range(NUMBER_OF_DIMENSIONS)]))
         particles = []
@@ -40,9 +41,9 @@ class Cube2DExperiment(Experiment):
             part = particle.Particle(cube.randomPosition(), maxSpeed * random(), randomDirection(NUMBER_OF_DIMENSIONS), particleMass, particleRadius)
             part.showState()
             particles.append(part)
-        return Cube2DExperiment(cube, particles)
+        return cls(cube, particles)
 
-exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 100, 1, 1, 1)
+exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 1000, 1, 1, 1)
 exp.showState()
 exp.runAnimated2D()
 exp.showState()
