@@ -33,15 +33,11 @@ class Cube2DExperiment(Experiment):
         plt.show()
     
     @classmethod
-    def createCube2DExperiment(cls, cubeEdgeLength, numberOfParticles, particleMass, maxSpeed, particleRadius):
+    def createCube2DExperiment(exp, cubeEdgeLength, numberOfParticles, particleMass, maxSpeed, particleRadius):
         NUMBER_OF_DIMENSIONS=2
         cube = domain.Cuboid(np.array([abs(cubeEdgeLength) for i in range(NUMBER_OF_DIMENSIONS)]))
-        particles = []
-        for i in range(numberOfParticles):
-            part = particle.Particle(cube.randomPosition(), maxSpeed * random(), randomDirection(NUMBER_OF_DIMENSIONS), particleMass, particleRadius)
-            part.showState()
-            particles.append(part)
-        return cls(cube, particles)
+        particles = Experiment.createParticleList(numberOfParticles, cube, maxSpeed * random(), particleMass, particleRadius)
+        return exp(cube, particles)
 
 exp: Cube2DExperiment = Cube2DExperiment.createCube2DExperiment(100, 1000, 1, 1, 1)
 exp.showState()

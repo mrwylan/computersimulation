@@ -1,14 +1,14 @@
 from typing import List
 import numpy as np
+from vectors import randomDirection
 import particle
 import domain
 
 class Experiment():
     """A class to implement the experiment setup. It takes care of the time aspect."""
-    def __init__(self, volume, particles: List[particle.Particle], numberOfSimulationSteps):
+    def __init__(self, volume, particles: List[particle.Particle]):
         self.volume: domain.Volume = volume
         self.particles = particles
-        self.numberOfSimulationSteps = numberOfSimulationSteps
         self.pressure = 0
         self.time: int = 0
     
@@ -30,15 +30,14 @@ class Experiment():
             boundry.absorbedImpulse = 0
         self.pressure = self.pressure + (impulseHeap / self.volume.surfaceArea - self.pressure) / self.time
     
-    def runStep(self):
-        self.time += 1
-        self.moveParticles()
-        self.handleParticleCollisions()
-        self.updatePressure()
-    
-    def run(self):
-        for i in np.arange(1, self.numberOfSimulationSteps):
-            self.runStep()
+    def runStep(self, iterations=1):
+        for i in range(iterations):
+            self.time += 1
+            print(str(self.time))
+            self.moveParticles()
+            self.handleParticleCollisions()
+            self.updatePressure()
+            self.showPressure()
     
     def calculateEnergy(self):
         self.energy = 0
@@ -54,3 +53,6 @@ class Experiment():
     def showState(self):
         self.calculateEnergy()
         self.showPressure()
+    
+    def createParticleList(numberofParticles, volume: domain.Volume, speed, mass, radius):
+        return [particle.Particle(volume.randomPosition(), speed, randomDirection(volume.dimensions), mass, radius) for x in range(numberofParticles)]
